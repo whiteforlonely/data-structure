@@ -1,7 +1,5 @@
 package com.ake.structure.redblacktree;
 
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
-
 public class RedBlackTree {
 
     private TreeNode<Integer> root;
@@ -45,9 +43,8 @@ public class RedBlackTree {
             }
         }
         // 只要判断父节点和祖父节点情况
-        node.setUncle(uncleNode);
         // 判断父节点的颜色
-        while (currNode != null && currNode.isRed()) {
+        while (currNode != null && currNode.isRed() && node.isRed()) {
             // 如果是红颜色，需要变色
             // 这边总共是2种情况，总的两种情况是根据 uncle节点颜色来决定怎么处理的
             if (uncleNode == null || !uncleNode.isRed()) {
@@ -72,7 +69,7 @@ public class RedBlackTree {
                     // 需要重新验证
                     node = currNode;
                     currNode = node.getParent();
-                    uncleNode = node.getUncle();
+                    uncleNode = getUncle(node);
                 } else if (blackUncleRule == 2) {
                     // 左右
                     gNode.setRed(true);
@@ -83,7 +80,7 @@ public class RedBlackTree {
 
                     //重新验证
                     currNode = node.getParent();
-                    uncleNode = node.getUncle();
+                    uncleNode = getUncle(node);
                 } else if (blackUncleRule == 0) {
                     // 右右
                     currNode.setRed(false);
@@ -94,7 +91,7 @@ public class RedBlackTree {
                     // 重新验证
                     node = currNode;
                     currNode = node.getParent();
-                    uncleNode = node.getUncle();
+                    uncleNode = getUncle(node);
                 } else {
                     // 右左
                     node.setRed(false);
@@ -104,13 +101,16 @@ public class RedBlackTree {
 
                     // 重新验证
                     currNode = node.getParent();
-                    uncleNode = node.getUncle();
+                    uncleNode = getUncle(node);
                 }
             } else {
                 // 需要循环变色
                 TreeNode<Integer> tmpNode = node;
                 tmpNode.getParent().setRed(false);
-                tmpNode.getUncle().setRed(false);
+                TreeNode<Integer> tmpUncleNode = getUncle(node);
+                if (null != tmpUncleNode) {
+                    tmpUncleNode.setRed(false);
+                }
                 if (tmpNode.getParent().getParent() != null && tmpNode.getParent().getParent() != root) {
                     // 把祖父节点标记成红色
                     tmpNode.getParent().getParent().setRed(true);
@@ -118,11 +118,28 @@ public class RedBlackTree {
                     // 这种情况需要重新验证
                     node = tmpNode.getParent().getParent();
                     currNode = node.getParent();
-                    uncleNode = node.getUncle();
+                    uncleNode = getUncle(node);
                 }
             }
         }
+    }
 
+    // 获取叔叔节点
+    private TreeNode<Integer> getUncle(TreeNode<Integer> node){
+        TreeNode<Integer> pNode = node.getParent();
+        if (pNode == null) {
+            return null;
+        }
+        TreeNode<Integer> gNode = pNode.getParent();
+        if (gNode == null) {
+            return null;
+        }
+
+        if (gNode.getLeft() == pNode) {
+            return gNode.getRight();
+        } else {
+            return gNode.getLeft();
+        }
     }
 
     // 删除节点
@@ -143,6 +160,7 @@ public class RedBlackTree {
         } else {
             // gnode为root节点
             root = rightNode;
+            rightNode.setParent(null);
        }
 
         // 设置孩子
@@ -154,22 +172,6 @@ public class RedBlackTree {
         if (rlNode !=null) {
             rlNode.setParent(gNode);
         }
-        rightNode.setParent(null);
-
-        // 设置叔叔节点
-        TreeNode<Integer> gNodeUncle = gNode.getUncle();
-        gNode.setUncle(rightNode.getUncle());
-        rightNode.setUncle(gNodeUncle);
-        if (leftNode !=null) {
-            leftNode.setUncle(rightNode.getRight());
-        }
-        if (rrNode !=null) {
-            rrNode.setUncle(gNode.getUncle());
-        }
-        if (rlNode != null) {
-            rlNode.setUncle(rrNode);
-        }
-
     }
 
     // 右旋
@@ -184,6 +186,7 @@ public class RedBlackTree {
             }
         } else {
             root = leftNode;
+            leftNode.setParent(null);
         }
 
         // 设置孩子
@@ -194,21 +197,6 @@ public class RedBlackTree {
         gNode.setParent(leftNode);
         if (lrNode != null) {
             lrNode.setParent(gNode);
-        }
-        leftNode.setParent(null);
-
-        // 设置叔叔节点
-        TreeNode<Integer> gNodeUncle = gNode.getUncle();
-        gNode.setUncle(leftNode.getUncle());
-        leftNode.setUncle(gNodeUncle);
-        if (rightNode !=null) {
-            leftNode.setUncle(leftNode.getLeft());
-        }
-        if (llNode !=null) {
-            llNode.setUncle(gNode.getUncle());
-        }
-        if (lrNode != null) {
-            lrNode.setUncle(llNode);
         }
     }
 
@@ -241,8 +229,11 @@ public class RedBlackTree {
 
     public static void main(String[] args) {
         RedBlackTree tree = new RedBlackTree();
-        for (int i = 0; i < 9; i ++) {
+        for (int i = 0; i < 12; i ++) {
             tree.addNode(i);
+            if (i == 7) {
+                System.out.println("test point");
+            }
         }
 
         tree.print1(tree.root);

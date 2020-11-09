@@ -8,7 +8,6 @@ public class TreeNode<T> {
     T value;
     TreeNode<T> left;
     TreeNode<T> right;
-    TreeNode<T> uncle;
     TreeNode<T> parent;
     boolean red;
     int hash;
